@@ -1,12 +1,13 @@
+--- START OF FILE game.js ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Variabel permainan
+// --- Variabel Permainan ---
 let bird = {
     x: 50,
     y: 150,
-    width: 60,
-    height: 40,
+    width: 50, // Sedikit dikurangi agar lebih ringan
+    height: 35, // Sedikit dikurangi agar lebih ringan
     gravity: 0.3,
     lift: -6,
     velocity: 0
@@ -18,12 +19,12 @@ let score = 0;
 let gameOver = false;
 let audioInitialized = false;
 
-// Variabel untuk kesulitan
-let pipeSpeed = 1.5; // Kecepatan awal pipa (Level 1)
-let pipeSpawnInterval = 150; // Jarak antar pipa (Level 1)
-let pipeGap = 200; // Celah antar pipa (Level 1)
+// --- Variabel untuk Kesulitan ---
+let pipeSpeed = 1.5;
+let pipeSpawnInterval = 150;
+let pipeGap = 200;
 
-// Audio effects
+// --- Audio effects ---
 const audioStart = new Audio('start.wav');
 const audioJump = new Audio('jump.wav');
 const audioScore = new Audio('score.wav');
@@ -36,11 +37,11 @@ const audioSuccess = new Audio('success.mp3');
     audio.load();
 });
 
-// Variabel kontrol untuk status audio dan antrian lompat
+// --- Variabel kontrol audio dan antrian lompat ---
 let isStartPlaying = false;
 let jumpQueue = false;
 
-// Fungsi untuk memainkan suara dengan penanganan error
+// --- Fungsi untuk memainkan suara dengan penanganan error ---
 function playSound(audio) {
     if (!audioInitialized) {
         audioInitialized = true;
@@ -48,157 +49,105 @@ function playSound(audio) {
     }
     audio.play().catch(error => {
         console.log("Error playing audio: ", error);
-        document.addEventListener('keydown', () => {
-            audio.play().catch(err => console.log("Retry audio play failed: ", err));
-        }, { once: true });
+        // Alternatif penanganan error audio (opsional):
+        // document.addEventListener('keydown', () => {
+        //     audio.play().catch(err => console.log("Retry audio play failed: ", err));
+        // }, { once: true });
     });
 }
 
-// Event listener untuk mendeteksi akhir suara start
+// --- Event listener untuk mendeteksi akhir suara start ---
 audioStart.onended = () => {
     isStartPlaying = false;
     if (jumpQueue) {
-        playSound(audioJump); // Putar jump yang tertunda
-        jumpQueue = false;   // Kosongkan antrian
+        playSound(audioJump);
+        jumpQueue = false;
     }
 };
 
-// Fungsi untuk menangani lompatan
+// --- Fungsi untuk menangani lompatan ---
 function handleJump() {
-    bird.velocity = bird.lift; // Selalu izinkan lompat
+    bird.velocity = bird.lift;
     if (isStartPlaying) {
-        jumpQueue = true; // Tambahkan ke antrian jika start masih berjalan
+        jumpQueue = true;
     } else {
-        playSound(audioJump); // Putar langsung jika start selesai
+        playSound(audioJump);
     }
 }
 
-// Kontrol keyboard
-document.addEventListener("keydown", function(event) {
-    if ((event.key === " " || event.shiftKey) && !gameOver) {
-        handleJump(); // Panggil fungsi lompatan untuk Spasi atau Shift
-        if (!audioInitialized) {
-            playSound(audioStart);
+// --- Kontrol input (Keyboard dan Touch) ---
+function handleInput() {
+    function jumpInput() {
+        if (!gameOver) {
+            handleJump();
+            if (!audioInitialized) {
+                playSound(audioStart);
+            }
         }
     }
-    if (event.key.toLowerCase() === "r" && gameOver) {
-        resetGame();
-    }
-});
 
-// Kontrol sentuh untuk perangkat mobile
-canvas.addEventListener("touchstart", function(event) {
-    event.preventDefault(); // Mencegah scroll atau zoom saat disentuh
-    if (!gameOver) {
-        handleJump(); // Panggil fungsi lompatan saat layar disentuh
-        if (!audioInitialized) {
-            playSound(audioStart);
+    document.addEventListener("keydown", function(event) {
+        if ((event.key === " " || event.shiftKey)) { // Spasi atau Shift untuk lompat
+            jumpInput();
         }
-    }
-}, { passive: false });
+        if (event.key.toLowerCase() === "r" && gameOver) {
+            resetGame();
+        }
+    });
 
-// Muat gambar burung
+    canvas.addEventListener("touchstart", function(event) {
+        event.preventDefault(); // Mencegah scroll/zoom
+        jumpInput();
+    }, { passive: false });
+}
+handleInput(); // Inisialisasi input handling
+
+// --- Muat gambar burung ---
 const birdImage = new Image();
 birdImage.src = 'burung.png';
 
-// Fungsi untuk menggambar burung dari gambar
+// Fungsi untuk menggambar burung (dari gambar atau placeholder)
 function drawBird() {
     if (birdImage.complete && birdImage.naturalWidth !== 0) {
         ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
     } else {
         console.log("Gambar burung belum dimuat atau rusak!");
-        ctx.fillStyle = "#FFFF00"; // Warna kuning sebagai placeholder jika gambar gagal
+        ctx.fillStyle = "#FFFF00"; // Placeholder kuning
         ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
     }
 }
 
-// Fungsi untuk menggambar pola bata
+// --- Fungsi-fungsi pola pipa (Disederhanakan untuk performa) ---
+// Fungsi pola bata (Disederhanakan)
 function drawBrickPattern(x, y, width, height) {
-    const brickWidth = 25;  // Lebar bata disesuaikan untuk detail lebih realistis
-    const brickHeight = 15; // Tinggi bata
-    const brickColor = ctx.createLinearGradient(x, y, x + width, y);
-    brickColor.addColorStop(0, '#FF6347'); // Merah terang (tomato)
-    brickColor.addColorStop(1, '#FA8072'); // Merah muda (salmon)
-    ctx.fillStyle = brickColor;
-
-    for (let row = 0; row < Math.ceil(height / brickHeight); row++) {
-        for (let col = 0; col < Math.ceil(width / brickWidth); col++) {
-            const brickX = x + col * brickWidth + (row % 2 === 0 ? 0 : brickWidth / 2); // Offset bergantian
-            const brickY = y + row * brickHeight;
-            ctx.fillRect(brickX, brickY, brickWidth - 2, brickHeight - 2); // Mengurangi 2 untuk garis
-            ctx.strokeStyle = '#808080'; // Garis abu-abu untuk mortar
-            ctx.lineWidth = 2;
-            ctx.strokeRect(brickX, brickY, brickWidth - 2, brickHeight - 2);
-        }
-    }
+    ctx.fillStyle = '#FA8072'; // Salmon sebagai warna bata sederhana
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = '#FF6347'; // Tomato untuk garis tepi
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
 }
 
-// Fungsi untuk menggambar pola bambu dengan tangkai dan daun
+// Fungsi pola bambu (Disederhanakan)
 function drawBambooPattern(x, y, width, height) {
-    const bambooColor = ctx.createLinearGradient(x, y, x + width, y);
-    bambooColor.addColorStop(0, '#228B22'); // Hijau tua (forestgreen)
-    bambooColor.addColorStop(1, '#2E8B57'); // Hijau lebih terang (seagreen)
-    ctx.fillStyle = bambooColor;
-    ctx.fillRect(x, y, width, height); // Gambar batang bambu
-
-    const segmentHeight = 100; // Tinggi setiap ruas bambu
-    ctx.strokeStyle = '#8B4513'; // Cokelat tua untuk ruas
-    ctx.lineWidth = 3;
-
-    // Gambar ruas bambu
-    for (let i = 0; i < Math.ceil(height / segmentHeight); i++) {
-        const segmentY = y + i * segmentHeight;
-        if (segmentY < y + height) {
-            ctx.beginPath();
-            ctx.moveTo(x, segmentY);
-            ctx.lineTo(x + width, segmentY);
-            ctx.stroke();
-
-            // Gambar tangkai dan daun pada setiap ruas (bergantian kiri/kanan)
-            const side = i % 2 === 0 ? 'left' : 'right'; // Bergantian kiri dan kanan
-            const stemX = side === 'left' ? x : x + width;
-            const stemEndX = side === 'left' ? x - 20 : x + width + 20;
-            const stemY = segmentY + 10;
-
-            // Gambar tangkai
-            ctx.beginPath();
-            ctx.strokeStyle = '#8B4513'; // Cokelat tua untuk tangkai
-            ctx.lineWidth = 1;
-            ctx.moveTo(stemX, stemY);
-            ctx.lineTo(stemEndX, stemY - 10); // Tangkai sedikit miring ke atas
-            ctx.stroke();
-
-            // Gambar daun (elips sederhana)
-            ctx.fillStyle = '#32CD32'; // Hijau terang untuk daun
-            ctx.beginPath();
-            ctx.ellipse(stemEndX, stemY - 10, 8, 3, side === 'left' ? Math.PI / 4 : -Math.PI / 4, 0, 2 * Math.PI); // Daun miring
-            ctx.fill();
-        }
-    }
-}
-
-// Fungsi untuk menggambar pola kayu
-function drawWoodPattern(x, y, width, height) {
-    const woodColor = ctx.createLinearGradient(x, y, x + width, y);
-    woodColor.addColorStop(0, '#8B4513'); // Cokelat tua (saddlebrown)
-    woodColor.addColorStop(1, '#D2B48C'); // Cokelat terang (tan)
-    ctx.fillStyle = woodColor;
-    ctx.fillRect(x, y, width, height); // Gambar tekstur kayu dasar
-
-    // Tambahkan serat kayu (garis horizontal dan vertikal)
-    ctx.strokeStyle = '#A0522D'; // Cokelat kemerahan untuk serat
-    ctx.lineWidth = 1;
-
-    // Garis horizontal (serat kayu)
-    for (let i = 0; i < height; i += 10) {
+    ctx.fillStyle = '#2E8B57'; // SeaGreen sebagai warna bambu sederhana
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = '#228B22'; // ForestGreen untuk ruas
+    ctx.lineWidth = 5;
+    for (let i = 0; i < height; i += 50) { // Ruas bambu lebih jarang
         ctx.beginPath();
         ctx.moveTo(x, y + i);
         ctx.lineTo(x + width, y + i);
         ctx.stroke();
     }
+}
 
-    // Garis vertikal (serat tambahan)
-    for (let i = 0; i < width; i += 15) {
+// Fungsi pola kayu (Disederhanakan)
+function drawWoodPattern(x, y, width, height) {
+    ctx.fillStyle = '#D2B48C'; // Tan sebagai warna kayu sederhana
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = '#8B4513'; // SaddleBrown untuk serat
+    ctx.lineWidth = 1;
+    for (let i = 0; i < width; i += 10) { // Serat kayu vertikal saja, lebih jarang
         ctx.beginPath();
         ctx.moveTo(x + i, y);
         ctx.lineTo(x + i, y + height);
@@ -206,63 +155,52 @@ function drawWoodPattern(x, y, width, height) {
     }
 }
 
-// Fungsi untuk menggambar pola batu
+// Fungsi pola batu (Disederhanakan)
 function drawStonePattern(x, y, width, height) {
-    const stoneColors = ['#D2B48C', '#F5F5DC', '#A9A9A9']; // Cokelat terang, krem, abu-abu
-    ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
-    ctx.fillRect(x, y, width, height); // Dasar batu acak
-
-    // Gambar batu-batu acak
-    const stoneCount = 10; // Jumlah batu per area
-    for (let i = 0; i < stoneCount; i++) {
-        const stoneX = x + Math.random() * width;
-        const stoneY = y + Math.random() * height;
-        const stoneWidth = 20 + Math.random() * 30; // Lebar batu acak
-        const stoneHeight = 15 + Math.random() * 20; // Tinggi batu acak
-        ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
-        ctx.beginPath();
-        ctx.ellipse(stoneX, stoneY, stoneWidth / 2, stoneHeight / 2, 0, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#696969'; // Abu-abu gelap untuk tepi
-        ctx.lineWidth = 1;
-        ctx.stroke();
-    }
+    ctx.fillStyle = '#A9A9A9'; // DarkGray sebagai warna batu sederhana
+    ctx.fillRect(x, y, width, height);
+    ctx.strokeStyle = '#696969'; // DimGray untuk tepi batu
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(x + width / 2, y + height / 2, width / 3, height / 3, 0, 0, 2 * Math.PI); // Satu batu besar di tengah
+    ctx.stroke();
 }
 
-// Fungsi untuk menentukan warna dan pola pipa berdasarkan skor
+
+// Fungsi untuk menentukan warna dan pola pipa (Sama seperti sebelumnya)
 function getPipeColors() {
     if (score < 10) {
-        return { body: ['#FF6347', '#FA8072'], edge: ['#FF6347', '#FA8072'], pattern: 'brick' }; // Pola bata merah terang
+        return { body: ['#FF6347', '#FA8072'], edge: ['#FF6347', '#FA8072'], pattern: 'brick' };
     } else if (score < 20) {
-        return { body: ['#228B22', '#2E8B57'], edge: ['#228B22', '#2E8B57'], pattern: 'bamboo' }; // Pola bambu
+        return { body: ['#228B22', '#2E8B57'], edge: ['#228B22', '#2E8B57'], pattern: 'bamboo' };
     } else if (score < 30) {
-        return { body: ['#8B4513', '#D2B48C'], edge: ['#8B4513', '#D2B48C'], pattern: 'wood' }; // Pola kayu
+        return { body: ['#8B4513', '#D2B48C'], edge: ['#8B4513', '#D2B48C'], pattern: 'wood' };
     } else {
-        return { body: ['#D2B48C', '#F5F5DC'], edge: ['#A9A9A9', '#696969'], pattern: 'stone' }; // Pola batu
+        return { body: ['#D2B48C', '#F5F5DC'], edge: ['#A9A9A9', '#696969'], pattern: 'stone' };
     }
 }
 
-// Fungsi untuk menyesuaikan kesulitan berdasarkan skor
+// Fungsi untuk menyesuaikan kesulitan (Sama seperti sebelumnya)
 function adjustDifficulty() {
     if (score === 10) {
-        pipeSpeed = 1.5 * 1.15; // 15% lebih cepat
-        pipeSpawnInterval = Math.round(150 * 0.85); // 15% lebih sering
-        pipeGap = Math.round(200 * 0.85); // 15% lebih sempit
-        playSound(audioSuccess); // Putar suara sukses
+        pipeSpeed = 1.5 * 1.15;
+        pipeSpawnInterval = Math.round(150 * 0.85);
+        pipeGap = Math.round(200 * 0.85);
+        playSound(audioSuccess);
     } else if (score === 20) {
-        pipeSpeed = 1.5 * 1.15 * 1.15; // 15% dari Level 2
-        pipeSpawnInterval = Math.round(150 * 0.85 * 0.85); // 15% dari Level 2
-        pipeGap = Math.round(200 * 0.85 * 0.85); // 15% dari Level 2
+        pipeSpeed = 1.5 * 1.15 * 1.15;
+        pipeSpawnInterval = Math.round(150 * 0.85 * 0.85);
+        pipeGap = Math.round(200 * 0.85 * 0.85);
         playSound(audioSuccess);
     } else if (score === 30) {
-        pipeSpeed = 1.5 * 1.15 * 1.15 * 1.15; // 15% dari Level 3
-        pipeSpawnInterval = Math.round(150 * 0.85 * 0.85 * 0.85); // 15% dari Level 3
-        pipeGap = Math.round(200 * 0.85 * 0.85 * 0.85); // 15% dari Level 3
+        pipeSpeed = 1.5 * 1.15 * 1.15 * 1.15;
+        pipeSpawnInterval = Math.round(150 * 0.85 * 0.85 * 0.85);
+        pipeGap = Math.round(200 * 0.85 * 0.85 * 0.85);
         playSound(audioSuccess);
     }
 }
 
-// Fungsi untuk membuat dan menggambar pipa 3D ala Mario Bros
+// Fungsi untuk membuat dan menggambar pipa (Pola Pipa Disederhanakan)
 function drawPipes() {
     if (frameCount % pipeSpawnInterval === 0) {
         let pipeHeight = Math.floor(Math.random() * (canvas.height - pipeGap)) + 50;
@@ -277,103 +215,106 @@ function drawPipes() {
     for (let i = pipes.length - 1; i >= 0; i--) {
         pipes[i].x -= pipeSpeed;
 
-        // Ambil warna dan pola pipa berdasarkan skor
         const colors = getPipeColors();
 
-        // Pipa atas
-        if (colors.pattern === 'brick') {
-            drawBrickPattern(pipes[i].x, 0, 50, pipes[i].top - 15); // Pola bata untuk badan
-            drawBrickPattern(pipes[i].x, pipes[i].top - 15, 50, 15); // Pola bata untuk tepi
-        } else if (colors.pattern === 'bamboo') {
-            drawBambooPattern(pipes[i].x, 0, 50, pipes[i].top - 15); // Pola bambu untuk badan
-            drawBambooPattern(pipes[i].x, pipes[i].top - 15, 50, 15); // Pola bambu untuk tepi
-        } else if (colors.pattern === 'wood') {
-            drawWoodPattern(pipes[i].x, 0, 50, pipes[i].top - 15); // Pola kayu untuk badan
-            drawWoodPattern(pipes[i].x, pipes[i].top - 15, 50, 15); // Pola kayu untuk tepi
-        } else if (colors.pattern === 'stone') {
-            drawStonePattern(pipes[i].x, 0, 50, pipes[i].top - 15); // Pola batu untuk badan
-            drawStonePattern(pipes[i].x, pipes[i].top - 15, 50, 15); // Pola batu untuk tepi
-        } else {
-            let gradientTopBody = ctx.createLinearGradient(pipes[i].x, 0, pipes[i].x + 50, 0);
-            gradientTopBody.addColorStop(0, colors.body[0]); // Sisi kiri
-            gradientTopBody.addColorStop(0.5, colors.body[1]); // Tengah
-            gradientTopBody.addColorStop(1, colors.body[0]); // Sisi kanan
-            ctx.fillStyle = gradientTopBody;
-            ctx.fillRect(pipes[i].x, 0, 50, pipes[i].top - 15); // Badan pipa
+        // Fungsi untuk menggambar pipa dengan pola yang disederhanakan
+        function drawSimplifiedPipe(x, topHeight, bottomHeight, pattern) {
+            const pipeWidth = 50; // Lebar pipa tetap
 
-            let gradientTopEnd = ctx.createLinearGradient(pipes[i].x, pipes[i].top - 15, pipes[i].x + 50, pipes[i].top - 15);
-            gradientTopEnd.addColorStop(0, colors.edge[0]);
-            gradientTopEnd.addColorStop(0.5, colors.edge[1]);
-            gradientTopEnd.addColorStop(1, colors.edge[0]);
-            ctx.fillStyle = gradientTopEnd;
-            ctx.fillRect(pipes[i].x, pipes[i].top - 15, 50, 15); // Tepi tebal 15px di celah
+            // Pipa Atas
+            ctx.fillStyle = colors.body[0]; // Warna badan utama
+            ctx.fillRect(x, 0, pipeWidth, topHeight - 15); // Badan pipa atas dikurangi tepinya
+            ctx.fillStyle = colors.edge[0]; // Warna tepi
+            ctx.fillRect(x, topHeight - 15, pipeWidth, 15); // Tepi atas
+
+            // Pipa Bawah
+            ctx.fillStyle = colors.body[0]; // Warna badan utama
+            ctx.fillRect(x, canvas.height - bottomHeight + 15, pipeWidth, bottomHeight - 15); // Badan pipa bawah dikurangi tepinya
+            ctx.fillStyle = colors.edge[0]; // Warna tepi
+            ctx.fillRect(x, canvas.height - bottomHeight, pipeWidth, 15); // Tepi bawah
+
+            // Tambahkan pola sederhana di atas warna solid
+            ctx.fillStyle = 'rgba(0,0,0,0.1)'; // Overlay pola semi-transparan
+            if (pattern === 'brick') {
+                // Pola garis horizontal sederhana untuk bata
+                for (let j = 0; j < topHeight - 15; j += 20) {
+                    ctx.fillRect(x, j, pipeWidth, 2);
+                }
+                for (let j = canvas.height - bottomHeight + 15; j < canvas.height; j += 20) {
+                    ctx.fillRect(x, j, pipeWidth, 2);
+                }
+
+            } else if (pattern === 'bamboo') {
+                // Pola garis vertikal untuk bambu
+                for (let j = 0; j < pipeWidth; j += 15) {
+                    ctx.fillRect(x + j, 0, 2, topHeight - 15);
+                    ctx.fillRect(x + j, canvas.height - bottomHeight + 15, 2, bottomHeight - 15);
+                }
+            } else if (pattern === 'wood') {
+                // Pola garis diagonal untuk kayu
+                for (let j = 0; j < pipeWidth; j += 15) {
+                    ctx.beginPath();
+                    ctx.moveTo(x + j, 0);
+                    ctx.lineTo(x + j + 10, topHeight - 15);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(x + j, canvas.height - bottomHeight + 15);
+                    ctx.lineTo(x + j + 10, canvas.height);
+                    ctx.stroke();
+                }
+            } else if (pattern === 'stone') {
+                 // Pola titik-titik untuk batu
+                for (let j = 10; j < pipeWidth - 10; j += 15) {
+                    for (let k = 10; k < topHeight - 25; k += 15) {
+                        ctx.fillRect(x + j, k, 2, 2); // Titik-titik kecil
+                    }
+                    for (let k = canvas.height - bottomHeight + 25; k < canvas.height - 10; k += 15) {
+                        ctx.fillRect(x + j, k, 2, 2); // Titik-titik kecil
+                    }
+                }
+            }
         }
 
-        // Pipa bawah
-        if (colors.pattern === 'brick') {
-            drawBrickPattern(pipes[i].x, canvas.height - pipes[i].bottom + 15, 50, pipes[i].bottom - 15); // Pola bata untuk badan
-            drawBrickPattern(pipes[i].x, canvas.height - pipes[i].bottom, 50, 15); // Pola bata untuk tepi
-        } else if (colors.pattern === 'bamboo') {
-            drawBambooPattern(pipes[i].x, canvas.height - pipes[i].bottom + 15, 50, pipes[i].bottom - 15); // Pola bambu untuk badan
-            drawBambooPattern(pipes[i].x, canvas.height - pipes[i].bottom, 50, 15); // Pola bambu untuk tepi
-        } else if (colors.pattern === 'wood') {
-            drawWoodPattern(pipes[i].x, canvas.height - pipes[i].bottom + 15, 50, pipes[i].bottom - 15); // Pola kayu untuk badan
-            drawWoodPattern(pipes[i].x, canvas.height - pipes[i].bottom, 50, 15); // Pola kayu untuk tepi
-        } else if (colors.pattern === 'stone') {
-            drawStonePattern(pipes[i].x, canvas.height - pipes[i].bottom + 15, 50, pipes[i].bottom - 15); // Pola batu untuk badan
-            drawStonePattern(pipes[i].x, canvas.height - pipes[i].bottom, 50, 15); // Pola batu untuk tepi
-        } else {
-            let gradientBottomBody = ctx.createLinearGradient(pipes[i].x, canvas.height, pipes[i].x + 50, canvas.height);
-            gradientBottomBody.addColorStop(0, colors.body[0]); // Sisi kiri
-            gradientBottomBody.addColorStop(0.5, colors.body[1]); // Tengah
-            gradientBottomBody.addColorStop(1, colors.body[0]); // Sisi kanan
-            ctx.fillStyle = gradientBottomBody;
-            ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom + 15, 50, pipes[i].bottom - 15); // Badan pipa
+        drawSimplifiedPipe(pipes[i].x, pipes[i].top, pipes[i].bottom, colors.pattern);
 
-            let gradientBottomEnd = ctx.createLinearGradient(pipes[i].x, canvas.height - pipes[i].bottom, pipes[i].x + 50, canvas.height - pipes[i].bottom);
-            gradientBottomEnd.addColorStop(0, colors.edge[0]);
-            gradientBottomEnd.addColorStop(0.5, colors.edge[1]);
-            gradientBottomEnd.addColorStop(1, colors.edge[0]);
-            ctx.fillStyle = gradientBottomEnd;
-            ctx.fillRect(pipes[i].x, canvas.height - pipes[i].bottom, 50, 15); // Tepi tebal 15px di celah
-        }
 
-        // Deteksi tabrakan hanya pada tubuh burung dengan presisi lebih tinggi
+        // Deteksi tabrakan (Sama seperti sebelumnya)
         if (
             bird.x + bird.width > pipes[i].x &&
             bird.x < pipes[i].x + 50 &&
             (
-                (bird.y + bird.height > pipes[i].top && bird.y < pipes[i].top) || // Tabrakan atas (hanya jika menembus)
-                (bird.y < canvas.height - pipes[i].bottom && bird.y + bird.height > canvas.height - pipes[i].bottom) // Tabrakan bawah (hanya jika menembus)
+                (bird.y + bird.height > pipes[i].top && bird.y < pipes[i].top) ||
+                (bird.y < canvas.height - pipes[i].bottom && bird.y + bird.height > canvas.height - pipes[i].bottom)
             )
         ) {
             gameOver = true;
             playSound(audioGameOver);
         }
 
-        // Tambah skor
+        // Tambah skor (Sama seperti sebelumnya)
         if (pipes[i].x + 50 < bird.x && !pipes[i].scored) {
             score++;
             pipes[i].scored = true;
             playSound(audioScore);
-            adjustDifficulty(); // Sesuaikan kesulitan saat skor bertambah
+            adjustDifficulty();
         }
 
-        // Hapus pipa yang sudah lelet
+        // Hapus pipa yang lewat (Sama seperti sebelumnya)
         if (pipes[i].x < -50) {
             pipes.splice(i, 1);
         }
     }
 }
 
-// Fungsi untuk menggambar skor
+// Fungsi untuk menggambar skor (Sama seperti sebelumnya)
 function drawScore() {
     ctx.fillStyle = "#000000";
     ctx.font = "30px Arial";
     ctx.fillText("Score: " + score, 10, 50);
 }
 
-// Fungsi untuk reset permainan
+// Fungsi untuk reset permainan (Sama seperti sebelumnya)
 function resetGame() {
     bird.y = 150;
     bird.velocity = 0;
@@ -382,13 +323,13 @@ function resetGame() {
     gameOver = false;
     isStartPlaying = true;
     jumpQueue = false;
-    pipeSpeed = 1.5; // Reset ke Level 1
-    pipeSpawnInterval = 150; // Reset ke Level 1
-    pipeGap = 200; // Reset ke Level 1
+    pipeSpeed = 1.5;
+    pipeSpawnInterval = 150;
+    pipeGap = 200;
     playSound(audioStart);
 }
 
-// Fungsi utama permainan
+// Fungsi utama permainan (Sama seperti sebelumnya dengan sedikit perubahan)
 function update() {
     if (gameOver) {
         ctx.fillStyle = "#000000";
@@ -403,12 +344,12 @@ function update() {
         isStartPlaying = true;
     }
 
-    // Hapus latar belakang eksplisit (kembali ke default canvas)
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     bird.velocity += bird.gravity;
     bird.y += bird.velocity;
 
+    // Batas bawah dan atas (Sama seperti sebelumnya)
     if (bird.y + bird.height > canvas.height) {
         bird.y = canvas.height - bird.height;
         bird.velocity = 0;
@@ -428,15 +369,15 @@ function update() {
     requestAnimationFrame(update);
 }
 
-// Fungsi untuk memastikan gambar burung dimuat sebelum game dimulai
+// --- Inisialisasi permainan setelah gambar burung dimuat ---
 birdImage.onload = function() {
     console.log("Gambar burung dimuat dengan sukses!");
-    update(); // Mulai game hanya setelah gambar dimuat
+    update();
 };
 
 birdImage.onerror = function() {
     console.error("Gagal memuat gambar burung! Periksa path file 'burung.png'.");
-    // Tampilkan placeholder jika gambar gagal dimuat
-    birdImage.src = ''; // Hapus sumber yang salah
-    update(); // Lanjutkan game dengan placeholder
+    birdImage.src = '';
+    update();
 };
+--- END OF FILE game.js ---
