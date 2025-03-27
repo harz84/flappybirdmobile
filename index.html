@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Flappy Bird Robot</title>
     <style>
         body {
@@ -11,128 +11,139 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            /* Use a dynamic height for mobile browser bars */
+            height: 100svh;
             background-color: #87CEEB;
             overflow: hidden;
+            touch-action: manipulation; /* Prevent zooming/panning on touch */
         }
 
         canvas {
             border: 2px solid #333;
             display: block;
-            max-width: 480px;
-            max-height: 640px;
-            background-color: #ADD8E6;
+            /* Max dimensions ensure it fits common screens */
+            max-width: 100%;
+            max-height: 100%;
+            /* Let JS control width/height based on aspect ratio */
+            /* background-color: #ADD8E6; */ /* Let the body background show through maybe? Or keep it for contrast */
+            background-color: #87CEEB; /* Match body for seamless feel */
+            image-rendering: -webkit-optimize-contrast; /* Sharper pixels on scaling */
+            image-rendering: crisp-edges;
         }
 
-        .game-over-overlay {
+        .overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            display: none;
+            background-color: rgba(0,0,0,0.75); /* Slightly darker overlay */
+            display: flex; /* Changed default to flex, hidden by JS */
             flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
-            font-size: 24px;
+            font-family: Arial, sans-serif; /* Consistent font */
             z-index: 10;
+            padding: 20px;
+            box-sizing: border-box; /* Include padding in dimensions */
+            text-align: center;
         }
 
-        .game-over-content {
-            text-align: center;
-            padding: 20px;
-            border-radius: 10px;
+        /* Specific overlay styles */
+        #gameOverOverlay {
+             display: none; /* Hidden initially */
+             z-index: 10;
+        }
+         #instructions {
+             display: flex; /* Shown initially */
+             z-index: 11;
+        }
+
+
+        .overlay-content {
+            background-color: rgba(50, 50, 50, 0.85); /* Darker content box */
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            max-width: 90%; /* Ensure content fits smaller screens */
+        }
+
+        .overlay h2 {
+            font-size: clamp(24px, 5vw, 32px); /* Responsive font size */
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #FFD700; /* Gold color for headers */
+        }
+
+         .overlay p {
+            font-size: clamp(16px, 3.5vw, 20px); /* Responsive font size */
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .overlay button {
+            margin-top: 25px;
+            padding: 12px 25px;
+            font-size: clamp(16px, 4vw, 18px); /* Responsive font size */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            font-weight: bold;
+        }
+         .overlay button:active {
+             transform: scale(0.95); /* Feedback on press */
+         }
+
+        #startButton {
+            background-color: #00B8D4; /* Cyan start button */
+        }
+        #startButton:hover {
+            background-color: #00869e;
         }
 
         #restartButton {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
+            background-color: #4CAF50; /* Green restart button */
         }
-
         #restartButton:hover {
             background-color: #45a049;
         }
 
-        .instructions-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 18px;
-            z-index: 11;
-            padding: 20px;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .instructions-content {
-            background-color: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 80%;
-        }
-
-        .instructions-overlay h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #FFD700;
-        }
-
-        .instructions-overlay p {
-            margin-bottom: 10px;
-        }
-
-        .instructions-overlay button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #00B8D4;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .instructions-overlay button:hover {
-            background-color: #00869e;
+        #finalScore {
+            font-weight: bold;
+            color: #FFD700; /* Highlight final score */
         }
 
     </style>
 </head>
 <body>
-    <div class="instructions-overlay" id="instructions">
-        <div class="instructions-content">
+    <!-- Instructions Overlay -->
+    <div class="overlay" id="instructions">
+        <div class="overlay-content">
             <h2>Cara Bermain</h2>
-            <p>Ketuk layar atau tekan Space/Shift untuk membuat burung mengepakkan sayapnya dan terbang.</p>
-            <p>Hindari pilar-pilar yang datang.</p>
-            <p>Dapatkan skor tertinggi!</p>
+            <p>Ketuk layar atau tekan Spasi/Shift untuk membuat burung mengepakkan sayapnya.</p>
+            <p>Terbang melewati celah antar pilar.</p>
+            <p>Semakin jauh, semakin cepat!</p>
+            <p>Raih skor tertinggi!</p>
             <button id="startButton">Mulai Main</button>
         </div>
     </div>
+
+    <!-- Canvas for the game -->
     <canvas id="gameCanvas"></canvas>
-    <div class="game-over-overlay" id="gameOverOverlay">
-        <div class="game-over-content">
+
+    <!-- Game Over Overlay -->
+    <div class="overlay" id="gameOverOverlay">
+        <div class="overlay-content">
             <h2 id="gameOverText">Game Over</h2>
-            <p>Skor Anda: <span id="finalScore">0</span></p>
-            <button id="restartButton">Mulai Lagi</button>
+            <p>Skor Akhir Anda: <span id="finalScore">0</span></p>
+            <button id="restartButton">Mulai Lagi (R)</button>
         </div>
     </div>
+
+    <!-- Game Logic -->
     <script src="game.js"></script>
 </body>
 </html>
