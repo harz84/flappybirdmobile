@@ -8,11 +8,6 @@ const gameOverTextElement = document.getElementById("gameOverText");
 const instructionsOverlay = document.getElementById("instructions");
 const startButton = document.getElementById("startButton");
 
-// Tambahkan event listener untuk tombol Mulai Main
-startButton.addEventListener('click', startGame);
-
-// Tambahkan event listener untuk tombol Restart
-restartButton.addEventListener('click', resetGame);
 
 let dimensions = { width: 0, height: 0 };
 const updateDimensions = () => {
@@ -33,15 +28,18 @@ const updateDimensions = () => {
 };
 
 updateDimensions();
+const resizeObserver = new ResizeObserver(updateDimensions);
+resizeObserver.observe(document.body);
 window.addEventListener('resize', updateDimensions);
+
 
 let bird = {
     x: 50,
     y: canvas.height / 4,
     width: dimensions.width * 0.125,
     height: dimensions.height * 0.0625,
-    gravity: 0.1,
-    lift: -4.5 * 0.7, // Dikurangi menjadi 70% dari nilai asli
+    gravity: 0.2,
+    lift: -6,
     velocity: 0
 };
 
@@ -51,8 +49,8 @@ let score = 0;
 let gameOver = false;
 let audioInitialized = false;
 let gameStarted = false;
-let pipeSpeed = 0.75;
-let pipeSpawnInterval = 150 * 2.5; // Ditambah menjadi 2,5 kali dari nilai asli
+let pipeSpeed = 2;
+let pipeSpawnInterval = 150;
 let pipeGap = dimensions.height / 3;
 let initialPipeSpawnInterval = pipeSpawnInterval;
 let initialPipeGap = pipeGap;
@@ -67,7 +65,6 @@ const audioSuccess = new Audio('success.mp3');
 });
 let isStartPlaying = false;
 let jumpQueue = false;
-
 function playSound(audio) {
     if (!audioInitialized) {
         audioInitialized = true;
@@ -83,7 +80,6 @@ function playSound(audio) {
         }, { once: true });
     });
 }
-
 audioStart.onended = () => {
     isStartPlaying = false;
     if (jumpQueue) {
@@ -91,7 +87,6 @@ audioStart.onended = () => {
         jumpQueue = false;
     }
 };
-
 function handleJump() {
     if (!gameStarted) return;
     bird.velocity = bird.lift;
@@ -101,7 +96,6 @@ function handleJump() {
         playSound(audioJump);
     }
 }
-
 document.addEventListener("keydown", function (event) {
     if ((event.key === " " || event.shiftKey) && !gameOver) {
         handleJump();
@@ -113,7 +107,6 @@ document.addEventListener("keydown", function (event) {
         resetGame();
     }
 });
-
 canvas.addEventListener("touchstart", function (event) {
     event.preventDefault();
     if (!gameOver) {
@@ -123,10 +116,8 @@ canvas.addEventListener("touchstart", function (event) {
         }
     }
 }, { passive: false });
-
 const birdImage = new Image();
 birdImage.src = 'burung.png';
-
 function drawBird() {
     if (birdImage.complete && birdImage.naturalWidth !== 0) {
         ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
@@ -136,7 +127,6 @@ function drawBird() {
         ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
     }
 }
-
 function drawBrickPattern(x, y, width, height) {
     const brickWidth = dimensions.width * 0.05;
     const brickHeight = dimensions.height * 0.0234;
@@ -155,7 +145,6 @@ function drawBrickPattern(x, y, width, height) {
         }
     }
 }
-
 function drawBambooPattern(x, y, width, height) {
     const bambooColor = ctx.createLinearGradient(x, y, x + width, y);
     bambooColor.addColorStop(0, '#228B22');
@@ -189,7 +178,6 @@ function drawBambooPattern(x, y, width, height) {
         }
     }
 }
-
 function drawWoodPattern(x, y, width, height) {
     const woodColor = ctx.createLinearGradient(x, y, x + width, y);
     woodColor.addColorStop(0, '#8B4513');
@@ -211,7 +199,6 @@ function drawWoodPattern(x, y, width, height) {
         ctx.stroke();
     }
 }
-
 function drawStonePattern(x, y, width, height) {
     const stoneColors = ['#D2B48C', '#F5F5DC', '#A9A9A9'];
     ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
@@ -231,7 +218,6 @@ function drawStonePattern(x, y, width, height) {
         ctx.stroke();
     }
 }
-
 function getPipeColors() {
     if (score < 10) {
         return { body: ['#FF6347', '#FA8072'], edge: ['#FF6347', '#FA8072'], pattern: 'brick' };
@@ -243,26 +229,24 @@ function getPipeColors() {
         return { body: ['#D2B48C', '#F5F5DC'], edge: ['#A9A9A9', '#696969'], pattern: 'stone' };
     }
 }
-
 function adjustDifficulty() {
     if (score === 5) {
-        pipeSpeed = 1.5 * 1.15;
+        pipeSpeed = 2 * 1.15;
         pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85);
         pipeGap = Math.round(initialPipeGap * 0.85);
         playSound(audioSuccess);
     } else if (score === 10) {
-        pipeSpeed = 1.5 * 1.15 * 1.15;
+        pipeSpeed = 2 * 1.15 * 1.15;
         pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85 * 0.85);
         pipeGap = Math.round(initialPipeGap * 0.85 * 0.85);
         playSound(audioSuccess);
     } else if (score === 15) {
-        pipeSpeed = 1.5 * 1.15 * 1.15 * 1.15;
+        pipeSpeed = 2 * 1.15 * 1.15 * 1.15;
         pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85 * 0.85 * 0.85);
         pipeGap = Math.round(initialPipeGap * 0.85 * 0.85 * 0.85);
         playSound(audioSuccess);
     }
 }
-
 function drawPipes() {
     if (frameCount % pipeSpawnInterval === 0) {
         let pipeHeight = Math.floor(Math.random() * (canvas.height - pipeGap)) + 50;
@@ -354,18 +338,16 @@ function drawPipes() {
         }
     }
 }
-
 function drawScore() {
     ctx.fillStyle = "#000000";
     ctx.font = "bold 30px Arial";
     ctx.shadowColor = "white";
-    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
     ctx.shadowBlur = 5;
-    ctx.fillText("Skor: " + score, 30, 50);
+    ctx.fillText("Skor: " + score, 10, 50);
     ctx.shadowBlur = 0;
 }
-
 let animationId;
 function update() {
     if (gameOver) {
@@ -394,15 +376,6 @@ function update() {
     frameCount++;
     animationId = requestAnimationFrame(update);
 }
-
-function startGame() {
-    if (!gameStarted) {
-        gameStarted = true;
-        instructionsOverlay.style.display = "none";
-        update();
-    }
-}
-
 function resetGame() {
     bird.y = canvas.height / 4;
     bird.velocity = 0;
@@ -411,11 +384,33 @@ function resetGame() {
     gameOver = false;
     isStartPlaying = true;
     jumpQueue = false;
-    pipeSpeed = 0.75;
+    pipeSpeed = 2;
     pipeSpawnInterval = initialPipeSpawnInterval;
     pipeGap = initialPipeGap;
     gameOverOverlay.style.display = "none";
     frameCount = 0;
     gameStarted = false;
     instructionsOverlay.style.display = "flex";
+    cancelAnimationFrame(animationId);
 }
+birdImage.onload = function () {
+    console.log("Gambar burung dimuat dengan sukses!");
+};
+birdImage.onerror = function () {
+    console.error("Gagal memuat gambar burung! Periksa path file 'burung.png'.");
+    birdImage.src = '';
+};
+startButton.addEventListener('click', () => {
+    if (!audioInitialized) {
+        playSound(audioStart);
+    }
+    gameStarted = true;
+    instructionsOverlay.style.display = "none";
+    update();
+});
+restartButton.addEventListener("click", () => {
+    resetGame();
+});
+window.onload = () => {
+    updateDimensions();
+};
