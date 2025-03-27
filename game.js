@@ -41,7 +41,7 @@ let bird = {
     width: dimensions.width * 0.125,
     height: dimensions.height * 0.0625,
     gravity: 0.1,
-    lift: -4.5,
+    lift: -4.5 * 0.7, // Dikurangi menjadi 70% dari nilai asli
     velocity: 0
 };
 
@@ -52,7 +52,7 @@ let gameOver = false;
 let audioInitialized = false;
 let gameStarted = false;
 let pipeSpeed = 0.75;
-let pipeSpawnInterval = 150;
+let pipeSpawnInterval = 150 * 2.5; // Ditambah menjadi 2,5 kali dari nilai asli
 let pipeGap = dimensions.height / 3;
 let initialPipeSpawnInterval = pipeSpawnInterval;
 let initialPipeGap = pipeGap;
