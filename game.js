@@ -12,14 +12,13 @@ const startButton = document.getElementById("startButton");
 const BASE_ASPECT_RATIO = 480 / 640;
 const BIRD_WIDTH_RATIO = 0.125; // Bird width relative to canvas width
 const BIRD_HEIGHT_RATIO = 0.0625; // Bird height relative to canvas height
-const PIPE_WIDTH_RATIO = 0.104; // Pipe width relative to canvas width
-const BASE_GRAVITY = 0.162; // Reduced by 10% AGAIN from 0.18
-const BASE_LIFT = -3.84;  // Reduced strength by 20% AGAIN from -4.8
+const PIPE_WIDTH_RATIO = 0.1248; // Increased width 120% from 0.104
+const BASE_GRAVITY = 0.1134; // Reduced by 30% AGAIN from 0.162
+const BASE_LIFT = -2.688;  // Reduced strength by 30% AGAIN from -3.84
 const BASE_PIPE_SPEED = 0.5;  // Reduced by 50% AGAIN from 1.0
 const BASE_PIPE_SPAWN_INTERVAL = 450; // Increased 3x from 150 for wider horizontal spacing
 const PIPE_GAP_RATIO = (1 / 3) * 0.75; // Gap is 75% of 1/3rd canvas height
 const DIFFICULTY_INCREASE_FACTOR = 1.10; // 10% increase
-// Adjust MIN_PIPE_SPAWN_INTERVAL if needed, but 60 is likely still fine even starting from 450
 const MIN_PIPE_SPAWN_INTERVAL = 60;
 
 let dimensions = { width: 0, height: 0 };
@@ -63,8 +62,8 @@ let bird = {
     y: 150, // Initial Y will be recalculated
     width: 0, // Will be calculated
     height: 0, // Will be calculated
-    gravity: BASE_GRAVITY, // Use the further adjusted base value
-    lift: BASE_LIFT,       // Use the further adjusted base value
+    gravity: BASE_GRAVITY, // Use the VERY further adjusted base value
+    lift: BASE_LIFT,       // Use the VERY further adjusted base value
     velocity: 0
 };
 
@@ -127,7 +126,7 @@ audioStart.onended = () => {
 
 function handleJump() {
     if (!gameStarted || gameOver) return; // Don't jump if game not started or over
-    bird.velocity = bird.lift; // Apply the (further reduced) lift
+    bird.velocity = bird.lift; // Apply the (VERY further reduced) lift
     if (isStartPlaying) {
         jumpQueue = true;
     } else {
@@ -215,6 +214,7 @@ function drawStonePattern(x, y, width, height) {
 
 function getPipeStyle() {
     // Determine style based on score
+    // This already ensures brick pattern for scores 0-9
     if (score < 10) return 'brick';
     if (score < 20) return 'bamboo';
     if (score < 30) return 'wood';
@@ -248,6 +248,7 @@ function drawPipes() {
         });
     }
 
+    // Calculate the WIDER pipe width using the new ratio
     const pipeWidth = dimensions.width * PIPE_WIDTH_RATIO;
     const currentStyle = getPipeStyle();
 
@@ -270,13 +271,13 @@ function drawPipes() {
             default: drawFunc = drawBrickPattern; break;
         }
 
-        // Draw top pipe
+        // Draw top pipe (now WIDER)
         drawFunc(pipe.x, 0, pipeWidth, pipe.topHeight);
-        // Draw bottom pipe
+        // Draw bottom pipe (now WIDER)
         drawFunc(pipe.x, bottomPipeY, pipeWidth, bottomPipeHeight);
 
 
-        // Collision Detection
+        // Collision Detection (uses the updated, WIDER pipeWidth automatically)
         if (
             bird.x < pipe.x + pipeWidth &&        // Bird's right edge > pipe's left edge
             bird.x + bird.width > pipe.x &&      // Bird's left edge < pipe's right edge
@@ -287,7 +288,7 @@ function drawPipes() {
             return; // Exit loop early on collision
         }
 
-        // Score Increment
+        // Score Increment (uses the updated, WIDER pipeWidth automatically)
         if (!pipe.scored && pipe.x + pipeWidth < bird.x) {
             score++;
             pipe.scored = true;
@@ -295,7 +296,7 @@ function drawPipes() {
             adjustDifficulty(); // Check if difficulty needs to increase
         }
 
-        // Remove pipes that are offscreen left
+        // Remove pipes that are offscreen left (uses the updated, WIDER pipeWidth automatically)
         if (pipe.x + pipeWidth < 0) {
             pipes.splice(i, 1);
         }
@@ -339,7 +340,7 @@ function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Update Bird Physics
-    bird.velocity += bird.gravity; // Apply the (further reduced) gravity
+    bird.velocity += bird.gravity; // Apply the (VERY further reduced) gravity
     bird.y += bird.velocity;
 
     // Check Boundaries
@@ -357,7 +358,7 @@ function update() {
     }
 
     // Draw Elements
-    drawPipes(); // Draw pipes first (background element)
+    drawPipes(); // Draw pipes first (background element, now wider)
     if (gameOver) return; // Check again if drawPipes triggered game over
 
     drawBird();
@@ -402,7 +403,7 @@ function resetGame() {
     // ctx.clearRect(0, 0, canvas.width, canvas.height);
     // drawBird();
     // drawScore();
-    console.log("Game Reset with adjusted physics and wider pipe spacing");
+    console.log("Game Reset with EXTREMELY adjusted physics, wider pipes");
 }
 
 function startGame() {
@@ -431,7 +432,7 @@ function startGame() {
     // updateDimensions(); // Ensure dimensions are current
     // bird.y = dimensions.height / 4; // Set initial bird Y based on current dimensions
 
-    console.log("Game Starting with adjusted physics and wider pipe spacing");
+    console.log("Game Starting with EXTREMELY adjusted physics, wider pipes");
     update(); // Start the game loop
 }
 
