@@ -35,7 +35,7 @@ window.addEventListener('resize', updateDimensions);
 
 let bird = {
     x: 50,
-    y: canvas.height / 4,
+    y: canvas.height    / 4,
     width: dimensions.width * 0.125,
     height: dimensions.height * 0.0625,
     gravity: 0.3    ,
