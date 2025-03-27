@@ -1,3 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Robot</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #87CEEB;
+            overflow: hidden; /* Mencegah scrollbars */
+            touch-action: manipulation; /* Mencegah zoom pada double-tap */
+        }
+
+        canvas {
+            border: 2px solid #333;
+            display: block;
+            max-width: 480px;
+            max-height: 640px;
+            background-color: #ADD8E6;
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 10;
+        }
+
+        .game-over-content {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        #restartButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #restartButton:hover {
+            background-color: #45a049;
+        }
+
+        .instructions-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            z-index: 11;
+            padding: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .instructions-content {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 80%;
+        }
+
+        .instructions-overlay h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        .instructions-overlay p {
+            margin-bottom: 10px;
+        }
+
+        .instructions-overlay button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #00B8D4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .instructions-overlay button:hover {
+            background-color: #00869e;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="instructions-overlay" id="instructions">
+        <div class="instructions-content">
+            <h2>Cara Bermain</h2>
+            <p>Ketuk layar atau tekan Space/Shift untuk membuat burung mengepakkan sayapnya dan terbang.</p>
+            <p>Hindari pilar-pilar yang datang.</p>
+            <p>Dapatkan skor tertinggi!</p>
+            <button id="startButton">Mulai Main</button>
+        </div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-content">
+            <h2 id="gameOverText">Game Over</h2>
+            <p>Skor Anda: <span id="finalScore">0</span></p>
+            <button id="restartButton">Mulai Lagi</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
+```
+
+**game.js**
+
+```javascript
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
@@ -28,7 +172,7 @@ const updateDimensions = () => {
 };
 
 updateDimensions();
-const resizeObserver = new ResizeObserver(updateDimensions);
+const resizeObserver = new ResizeObserver(document.body);
 resizeObserver.observe(document.body);
 window.addEventListener('resize', updateDimensions);
 
@@ -38,8 +182,8 @@ let bird = {
     y: canvas.height / 4,
     width: dimensions.width * 0.125,
     height: dimensions.height * 0.0625,
-    gravity: 0.2,
-    lift: -6,
+    gravity: 0.15,
+    lift: -5,
     velocity: 0
 };
 
@@ -49,7 +193,7 @@ let score = 0;
 let gameOver = false;
 let audioInitialized = false;
 let gameStarted = false;
-let pipeSpeed = 2;
+let pipeSpeed = 1;
 let pipeSpawnInterval = 150;
 let pipeGap = dimensions.height / 3;
 let initialPipeSpawnInterval = pipeSpawnInterval;
@@ -231,17 +375,17 @@ function getPipeColors() {
 }
 function adjustDifficulty() {
     if (score === 5) {
-        pipeSpeed = 2 * 1.15;
+        pipeSpeed = 1.5 * 1.15;
         pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85);
         pipeGap = Math.round(initialPipeGap * 0.85);
         playSound(audioSuccess);
     } else if (score === 10) {
-        pipeSpeed = 2 * 1.15 * 1.15;
+        pipeSpeed = 1.5 * 1.15 * 1.15;
         pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85 * 0.85);
         pipeGap = Math.round(initialPipeGap * 0.85 * 0.85);
         playSound(audioSuccess);
     } else if (score === 15) {
-        pipeSpeed = 2 * 1.15 * 1.15 * 1.15;
+        pipeSpeed = 1.5 * 1.15 * 1.15 * 1.15;
         pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85 * 0.85 * 0.85);
         pipeGap = Math.round(initialPipeGap * 0.85 * 0.85 * 0.85);
         playSound(audioSuccess);
@@ -342,10 +486,10 @@ function drawScore() {
     ctx.fillStyle = "#000000";
     ctx.font = "bold 30px Arial";
     ctx.shadowColor = "white";
-    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetX = 5;
     ctx.shadowOffsetY = 2;
     ctx.shadowBlur = 5;
-    ctx.fillText("Skor: " + score, 10, 50);
+    ctx.fillText("Skor: " + score, 20, 50);
     ctx.shadowBlur = 0;
 }
 let animationId;
@@ -384,7 +528,7 @@ function resetGame() {
     gameOver = false;
     isStartPlaying = true;
     jumpQueue = false;
-    pipeSpeed = 2;
+    pipeSpeed = 1;
     pipeSpawnInterval = initialPipeSpawnInterval;
     pipeGap = initialPipeGap;
     gameOverOverlay.style.display = "none";
@@ -395,22 +539,4 @@ function resetGame() {
 }
 birdImage.onload = function () {
     console.log("Gambar burung dimuat dengan sukses!");
-};
-birdImage.onerror = function () {
-    console.error("Gagal memuat gambar burung! Periksa path file 'burung.png'.");
-    birdImage.src = '';
-};
-startButton.addEventListener('click', () => {
-    if (!audioInitialized) {
-        playSound(audioStart);
-    }
-    gameStarted = true;
-    instructionsOverlay.style.display = "none";
-    update();
-});
-restartButton.addEventListener("click", () => {
-    resetGame();
-});
-window.onload = () => {
-    updateDimensions();
 };
