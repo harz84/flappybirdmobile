@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, orientation=portrait">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flappy Bird Robot</title>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -14,7 +13,6 @@
             height: 100vh;
             background-color: #87CEEB;
             overflow: hidden;
-            touch-action: manipulation;
         }
 
         canvas {
@@ -89,41 +87,42 @@
             max-width: 80%;
         }
 
-        .instructions-content h2 {
-            font-family: 'Exo 2', sans-serif;
-            font-size: 35px;
-            color: #FFD700;
+        .instructions-overlay h2 {
+            font-size: 24px;
             margin-bottom: 10px;
+            color: #FFD700;
         }
 
-        .instructions-content p {
-            font-family: 'Exo 2', sans-serif;
-            font-size: 18px;
+        .instructions-overlay p {
             margin-bottom: 10px;
         }
 
         .instructions-overlay button {
-            font-family: 'Exo 2', sans-serif;
-            font-size: 16px;
+            margin-top: 20px;
             padding: 10px 20px;
-            background-color: #FFD700;
+            font-size: 16px;
+            color: white;
+            background-color: #00B8D4;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
 
         .instructions-overlay button:hover {
             background-color: #00869e;
         }
+
     </style>
 </head>
 <body>
     <div class="instructions-overlay" id="instructions">
         <div class="instructions-content">
-            <h2>Welcome to Game Manuk Stress</h2>
+            <h2>Cara Bermain</h2>
             <p>Ketuk layar atau tekan Space/Shift untuk membuat burung mengepakkan sayapnya dan terbang.</p>
             <p>Hindari pilar-pilar yang datang.</p>
             <p>Dapatkan skor tertinggi!</p>
-            <button id="startButton">Start</button>
+            <button id="startButton">Mulai Main</button>
         </div>
     </div>
     <canvas id="gameCanvas"></canvas>
