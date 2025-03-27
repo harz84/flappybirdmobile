@@ -1,147 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappy Bird Robot</title>
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #87CEEB;
-            overflow: hidden; /* Mencegah scrollbars */
-            touch-action: manipulation; /* Mencegah zoom pada double-tap */
-        }
-
-        canvas {
-            border: 2px solid #333;
-            display: block;
-            max-width: 480px;
-            max-height: 640px;
-            background-color: #ADD8E6;
-        }
-
-        .game-over-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 24px;
-            z-index: 10;
-        }
-
-        .game-over-content {
-            text-align: center;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        #restartButton {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        #restartButton:hover {
-            background-color: #45a049;
-        }
-
-        .instructions-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 18px;
-            z-index: 11;
-            padding: 20px;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .instructions-content {
-            background-color: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            padding: 20px;
-            max-width: 80%;
-        }
-
-        .instructions-overlay h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: #FFD700;
-        }
-
-        .instructions-overlay p {
-            margin-bottom: 10px;
-        }
-
-        .instructions-overlay button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #00B8D4;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .instructions-overlay button:hover {
-            background-color: #00869e;
-        }
-
-    </style>
-</head>
-<body>
-    <div class="instructions-overlay" id="instructions">
-        <div class="instructions-content">
-            <h2>Cara Bermain</h2>
-            <p>Ketuk layar atau tekan Space/Shift untuk membuat burung mengepakkan sayapnya dan terbang.</p>
-            <p>Hindari pilar-pilar yang datang.</p>
-            <p>Dapatkan skor tertinggi!</p>
-            <button id="startButton">Mulai Main</button>
-        </div>
-    </div>
-    <canvas id="gameCanvas"></canvas>
-    <div class="game-over-overlay" id="gameOverOverlay">
-        <div class="game-over-content">
-            <h2 id="gameOverText">Game Over</h2>
-            <p>Skor Anda: <span id="finalScore">0</span></p>
-            <button id="restartButton">Mulai Lagi</button>
-        </div>
-    </div>
-    <script src="game.js"></script>
-</body>
-</html>
-```
-
-**game.js**
-
-```javascript
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const gameOverOverlay = document.getElementById("gameOverOverlay");
@@ -152,6 +8,11 @@ const gameOverTextElement = document.getElementById("gameOverText");
 const instructionsOverlay = document.getElementById("instructions");
 const startButton = document.getElementById("startButton");
 
+// Tambahkan event listener untuk tombol Mulai Main
+startButton.addEventListener('click', startGame);
+
+// Tambahkan event listener untuk tombol Restart
+restartButton.addEventListener('click', resetGame);
 
 let dimensions = { width: 0, height: 0 };
 const updateDimensions = () => {
@@ -172,10 +33,7 @@ const updateDimensions = () => {
 };
 
 updateDimensions();
-const resizeObserver = new ResizeObserver(document.body);
-resizeObserver.observe(document.body);
 window.addEventListener('resize', updateDimensions);
-
 
 let bird = {
     x: 50,
@@ -209,6 +67,7 @@ const audioSuccess = new Audio('success.mp3');
 });
 let isStartPlaying = false;
 let jumpQueue = false;
+
 function playSound(audio) {
     if (!audioInitialized) {
         audioInitialized = true;
@@ -224,6 +83,7 @@ function playSound(audio) {
         }, { once: true });
     });
 }
+
 audioStart.onended = () => {
     isStartPlaying = false;
     if (jumpQueue) {
@@ -231,6 +91,7 @@ audioStart.onended = () => {
         jumpQueue = false;
     }
 };
+
 function handleJump() {
     if (!gameStarted) return;
     bird.velocity = bird.lift;
@@ -240,6 +101,7 @@ function handleJump() {
         playSound(audioJump);
     }
 }
+
 document.addEventListener("keydown", function (event) {
     if ((event.key === " " || event.shiftKey) && !gameOver) {
         handleJump();
@@ -251,6 +113,7 @@ document.addEventListener("keydown", function (event) {
         resetGame();
     }
 });
+
 canvas.addEventListener("touchstart", function (event) {
     event.preventDefault();
     if (!gameOver) {
@@ -260,8 +123,10 @@ canvas.addEventListener("touchstart", function (event) {
         }
     }
 }, { passive: false });
+
 const birdImage = new Image();
 birdImage.src = 'burung.png';
+
 function drawBird() {
     if (birdImage.complete && birdImage.naturalWidth !== 0) {
         ctx.drawImage(birdImage, bird.x, bird.y, bird.width, bird.height);
@@ -271,6 +136,7 @@ function drawBird() {
         ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
     }
 }
+
 function drawBrickPattern(x, y, width, height) {
     const brickWidth = dimensions.width * 0.05;
     const brickHeight = dimensions.height * 0.0234;
@@ -289,6 +155,7 @@ function drawBrickPattern(x, y, width, height) {
         }
     }
 }
+
 function drawBambooPattern(x, y, width, height) {
     const bambooColor = ctx.createLinearGradient(x, y, x + width, y);
     bambooColor.addColorStop(0, '#228B22');
@@ -322,6 +189,7 @@ function drawBambooPattern(x, y, width, height) {
         }
     }
 }
+
 function drawWoodPattern(x, y, width, height) {
     const woodColor = ctx.createLinearGradient(x, y, x + width, y);
     woodColor.addColorStop(0, '#8B4513');
@@ -343,6 +211,7 @@ function drawWoodPattern(x, y, width, height) {
         ctx.stroke();
     }
 }
+
 function drawStonePattern(x, y, width, height) {
     const stoneColors = ['#D2B48C', '#F5F5DC', '#A9A9A9'];
     ctx.fillStyle = stoneColors[Math.floor(Math.random() * stoneColors.length)];
@@ -362,6 +231,7 @@ function drawStonePattern(x, y, width, height) {
         ctx.stroke();
     }
 }
+
 function getPipeColors() {
     if (score < 10) {
         return { body: ['#FF6347', '#FA8072'], edge: ['#FF6347', '#FA8072'], pattern: 'brick' };
@@ -373,6 +243,7 @@ function getPipeColors() {
         return { body: ['#D2B48C', '#F5F5DC'], edge: ['#A9A9A9', '#696969'], pattern: 'stone' };
     }
 }
+
 function adjustDifficulty() {
     if (score === 5) {
         pipeSpeed = 1.5 * 1.15;
@@ -391,6 +262,7 @@ function adjustDifficulty() {
         playSound(audioSuccess);
     }
 }
+
 function drawPipes() {
     if (frameCount % pipeSpawnInterval === 0) {
         let pipeHeight = Math.floor(Math.random() * (canvas.height - pipeGap)) + 50;
@@ -482,6 +354,7 @@ function drawPipes() {
         }
     }
 }
+
 function drawScore() {
     ctx.fillStyle = "#000000";
     ctx.font = "bold 30px Arial";
@@ -492,6 +365,7 @@ function drawScore() {
     ctx.fillText("Skor: " + score, 30, 50);
     ctx.shadowBlur = 0;
 }
+
 let animationId;
 function update() {
     if (gameOver) {
@@ -525,10 +399,9 @@ function startGame() {
     if (!gameStarted) {
         gameStarted = true;
         instructionsOverlay.style.display = "none";
-        update(); // Memulai loop animasi
+        update();
     }
 }
-
 
 function resetGame() {
     bird.y = canvas.height / 4;
@@ -543,4 +416,6 @@ function resetGame() {
     pipeGap = initialPipeGap;
     gameOverOverlay.style.display = "none";
     frameCount = 0;
-    gameStarted = fa
+    gameStarted = false;
+    instructionsOverlay.style.display = "flex";
+}
