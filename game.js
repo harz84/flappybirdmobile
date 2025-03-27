@@ -38,8 +38,8 @@ let bird = {
     y: canvas.height / 4,
     width: dimensions.width * 0.125,
     height: dimensions.height * 0.0625,
-    gravity: 0.5,
-    lift: -10,
+    gravity: 0.3    ,
+    lift: -8,
     velocity: 0
 };
 
