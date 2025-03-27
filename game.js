@@ -13,9 +13,9 @@ const BASE_ASPECT_RATIO = 480 / 640;
 const BIRD_WIDTH_RATIO = 0.125; // Bird width relative to canvas width
 const BIRD_HEIGHT_RATIO = 0.0625; // Bird height relative to canvas height
 const PIPE_WIDTH_RATIO = 0.104; // Pipe width relative to canvas width
-const BASE_GRAVITY = 0.2;
-const BASE_LIFT = -6;
-const BASE_PIPE_SPEED = 2;
+const BASE_GRAVITY = 0.162; // Reduced by 10% AGAIN from 0.18
+const BASE_LIFT = -3.84;  // Reduced strength by 20% AGAIN from -4.8
+const BASE_PIPE_SPEED = 0.5;  // Reduced by 50% AGAIN from 1.0
 const BASE_PIPE_SPAWN_INTERVAL = 150; // Frames between pipe spawns
 const PIPE_GAP_RATIO = (1 / 3) * 0.75; // Gap is 75% of 1/3rd canvas height
 const DIFFICULTY_INCREASE_FACTOR = 1.10; // 10% increase
@@ -62,8 +62,8 @@ let bird = {
     y: 150, // Initial Y will be recalculated
     width: 0, // Will be calculated
     height: 0, // Will be calculated
-    gravity: BASE_GRAVITY,
-    lift: BASE_LIFT,
+    gravity: BASE_GRAVITY, // Use the further adjusted base value
+    lift: BASE_LIFT,       // Use the further adjusted base value
     velocity: 0
 };
 
@@ -74,7 +74,7 @@ let score = 0;
 let gameOver = false;
 let audioInitialized = false;
 let gameStarted = false;
-let pipeSpeed = BASE_PIPE_SPEED;
+let pipeSpeed = BASE_PIPE_SPEED; // Use the further adjusted base value
 let pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL;
 let animationId;
 
@@ -126,7 +126,7 @@ audioStart.onended = () => {
 
 function handleJump() {
     if (!gameStarted || gameOver) return; // Don't jump if game not started or over
-    bird.velocity = bird.lift;
+    bird.velocity = bird.lift; // Apply the (further reduced) lift
     if (isStartPlaying) {
         jumpQueue = true;
     } else {
@@ -222,6 +222,7 @@ function getPipeStyle() {
 
 function adjustDifficulty() {
     // Increase difficulty by 10% when score crosses a multiple of 10 (11, 21, 31...)
+    // Note: This increases the already VERY reduced pipeSpeed
     if (score > 10 && (score - 1) % 10 === 0) {
         pipeSpeed *= DIFFICULTY_INCREASE_FACTOR;
         // Decrease spawn interval, but ensure it doesn't go below minimum
@@ -253,7 +254,7 @@ function drawPipes() {
     // Draw and update existing pipes
     for (let i = pipes.length - 1; i >= 0; i--) {
         const pipe = pipes[i];
-        pipe.x -= pipeSpeed; // Move pipe left
+        pipe.x -= pipeSpeed; // Move pipe left using the (further reduced) speed
 
         // Calculate bottom pipe position based on top pipe and gap
         const bottomPipeY = pipe.topHeight + pipeGap;
@@ -338,7 +339,7 @@ function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Update Bird Physics
-    bird.velocity += bird.gravity;
+    bird.velocity += bird.gravity; // Apply the (further reduced) gravity
     bird.y += bird.velocity;
 
     // Check Boundaries
@@ -372,6 +373,10 @@ function resetGame() {
     // Reset bird state
     bird.y = dimensions.height / 4; // Reset position based on current dimensions
     bird.velocity = 0;
+    // Ensure bird physics are reset to base values defined at top
+    bird.gravity = BASE_GRAVITY;
+    bird.lift = BASE_LIFT;
+
 
     // Reset game state
     pipes = [];
@@ -379,7 +384,7 @@ function resetGame() {
     gameOver = false;
     gameStarted = false; // Require start again
     frameCount = 0;
-    pipeSpeed = BASE_PIPE_SPEED; // Reset speed to base
+    pipeSpeed = BASE_PIPE_SPEED; // Reset speed to the new (VERY reduced) base
     pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL; // Reset spawn rate to base
 
     // Reset audio state flags
@@ -397,11 +402,17 @@ function resetGame() {
     // ctx.clearRect(0, 0, canvas.width, canvas.height);
     // drawBird();
     // drawScore();
-    console.log("Game Reset");
+    console.log("Game Reset with further adjusted physics");
 }
 
 function startGame() {
     if (gameStarted) return; // Prevent multiple starts
+
+    // Ensure physics values are set correctly for the start of the game
+    bird.gravity = BASE_GRAVITY;
+    bird.lift = BASE_LIFT;
+    pipeSpeed = BASE_PIPE_SPEED;
+
 
     if (!audioInitialized) {
         // Attempt to play a silent sound or the start sound to unlock audio context
@@ -419,7 +430,7 @@ function startGame() {
     // updateDimensions(); // Ensure dimensions are current
     // bird.y = dimensions.height / 4; // Set initial bird Y based on current dimensions
 
-    console.log("Game Starting");
+    console.log("Game Starting with further adjusted physics");
     update(); // Start the game loop
 }
 
@@ -440,17 +451,24 @@ window.addEventListener('load', () => {
 const resizeObserver = new ResizeObserver(entries => {
      // We only observe body, so only one entry expected
      if (entries[0]) {
-         // Avoid resizing if game is running to prevent jarring changes? Or allow it?
-         // Let's allow it, updateDimensions handles recalculations.
+         // We should always update dimensions on resize.
          console.log("Resize detected, updating dimensions.");
          updateDimensions();
+         // Reset bird position and physics based on new dimensions/base values
+         // This might be jarring mid-game, but necessary for consistency
+         bird.y = dimensions.height / 4; // Re-center bird
+         bird.gravity = BASE_GRAVITY;    // Ensure correct gravity
+         bird.lift = BASE_LIFT;          // Ensure correct lift
+
          // If game is not running, redraw initial state elements
          if (!gameStarted && !gameOver) {
-              bird.y = dimensions.height / 4; // Re-center bird
               ctx.clearRect(0, 0, canvas.width, canvas.height);
               // drawBird(); // Maybe draw bird in starting position
          } else if (gameOver) {
              // Adjust overlay maybe? CSS handles it mostly.
+         } else {
+             // If game *is* running, the next frame of update() will use the new bird pos/physics.
+             // No extra drawing needed here.
          }
      }
 });
