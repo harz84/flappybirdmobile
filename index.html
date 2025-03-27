@@ -1,4 +1,3 @@
---- START OF FILE index.html ---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +5,134 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flappy Bird Robot</title>
     <style>
-        canvas {
-            border: 1px solid black; /* Garis tepi untuk memudahkan melihat batas canvas saat pengembangan */
-            display: block; /* Menghilangkan ruang kosong di bawah canvas */
-            margin: 0 auto; /* Membuat canvas berada di tengah horizontal */
-            width: 100%; /* Membuat kanvas responsif terhadap lebar layar */
-            height: auto; /* Menjaga aspek rasio kanvas */
-            max-width: 480px; /* Batas lebar maksimum canvas agar tidak terlalu besar di layar lebar */
-            max-height: 640px; /* Batas tinggi maksimum canvas */
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #87CEEB;
+            overflow: hidden;
         }
+
+        canvas {
+            border: 2px solid #333;
+            display: block;
+            max-width: 480px;
+            max-height: 640px;
+            background-color: #ADD8E6;
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 10;
+        }
+
+        .game-over-content {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        #restartButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #restartButton:hover {
+            background-color: #45a049;
+        }
+
+        .instructions-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            z-index: 11;
+            padding: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .instructions-content {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 80%;
+        }
+
+        .instructions-overlay h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        .instructions-overlay p {
+            margin-bottom: 10px;
+        }
+
+        .instructions-overlay button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #00B8D4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .instructions-overlay button:hover {
+            background-color: #00869e;
+        }
+
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="480" height="640"></canvas>
+    <div class="instructions-overlay" id="instructions">
+        <div class="instructions-content">
+            <h2>Cara Bermain</h2>
+            <p>Ketuk layar atau tekan Space/Shift untuk membuat burung mengepakkan sayapnya dan terbang.</p>
+            <p>Hindari pilar-pilar yang datang.</p>
+            <p>Dapatkan skor tertinggi!</p>
+            <button id="startButton">Mulai Main</button>
+        </div>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-content">
+            <h2 id="gameOverText">Game Over</h2>
+            <p>Skor Anda: <span id="finalScore">0</span></p>
+            <button id="restartButton">Mulai Lagi</button>
+        </div>
+    </div>
     <script src="game.js"></script>
 </body>
 </html>
---- END OF FILE index.html ---
