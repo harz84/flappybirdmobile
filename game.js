@@ -16,10 +16,11 @@ const PIPE_WIDTH_RATIO = 0.104; // Pipe width relative to canvas width
 const BASE_GRAVITY = 0.162; // Reduced by 10% AGAIN from 0.18
 const BASE_LIFT = -3.84;  // Reduced strength by 20% AGAIN from -4.8
 const BASE_PIPE_SPEED = 0.5;  // Reduced by 50% AGAIN from 1.0
-const BASE_PIPE_SPAWN_INTERVAL = 150; // Frames between pipe spawns
-const PIPE_GAP_RATIO = 0.75; // Tripled from (1/3 * 0.75). Gap is now 75% of canvas height.
+const BASE_PIPE_SPAWN_INTERVAL = 450; // Increased 3x from 150 for wider horizontal spacing
+const PIPE_GAP_RATIO = (1 / 3) * 0.75; // Gap is 75% of 1/3rd canvas height
 const DIFFICULTY_INCREASE_FACTOR = 1.10; // 10% increase
-const MIN_PIPE_SPAWN_INTERVAL = 60; // Minimum frames between spawns
+// Adjust MIN_PIPE_SPAWN_INTERVAL if needed, but 60 is likely still fine even starting from 450
+const MIN_PIPE_SPAWN_INTERVAL = 60;
 
 let dimensions = { width: 0, height: 0 };
 let pipeGap = 0; // Will be calculated based on dimensions
@@ -48,7 +49,7 @@ const updateDimensions = () => {
     canvas.height = dimensions.height;
 
     // Recalculate dynamic sizes based on new dimensions
-    pipeGap = dimensions.height * PIPE_GAP_RATIO; // Calculate the very large gap
+    pipeGap = dimensions.height * PIPE_GAP_RATIO;
     bird.width = dimensions.width * BIRD_WIDTH_RATIO;
     bird.height = dimensions.height * BIRD_HEIGHT_RATIO;
     // Recenter bird vertically if needed (though resetGame handles initial placement)
@@ -75,7 +76,7 @@ let gameOver = false;
 let audioInitialized = false;
 let gameStarted = false;
 let pipeSpeed = BASE_PIPE_SPEED; // Use the further adjusted base value
-let pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL;
+let pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL; // Use the increased base interval
 let animationId;
 
 // Audio Elements
@@ -222,10 +223,9 @@ function getPipeStyle() {
 
 function adjustDifficulty() {
     // Increase difficulty by 10% when score crosses a multiple of 10 (11, 21, 31...)
-    // Note: This increases the already VERY reduced pipeSpeed
     if (score > 10 && (score - 1) % 10 === 0) {
         pipeSpeed *= DIFFICULTY_INCREASE_FACTOR;
-        // Decrease spawn interval, but ensure it doesn't go below minimum
+        // Decrease spawn interval (starting from 450 now), but ensure it doesn't go below minimum
         pipeSpawnInterval = Math.max(MIN_PIPE_SPAWN_INTERVAL, Math.round(pipeSpawnInterval / DIFFICULTY_INCREASE_FACTOR));
         console.log(`Difficulty increased at score ${score}: Speed=${pipeSpeed.toFixed(2)}, Interval=${pipeSpawnInterval}`);
         playSound(audioSuccess);
@@ -233,34 +233,19 @@ function adjustDifficulty() {
 }
 
 function drawPipes() {
-    // Spawn new pipes
+    // Spawn new pipes (less frequently now)
     if (frameCount % pipeSpawnInterval === 0) {
-        // Ensure top pipe has a minimum height (e.g., 50px)
+        // Ensure top pipe has a minimum height (e.g., 50px) and doesn't go offscreen
         const minTopHeight = 50;
-        // Calculate max possible height for the top pipe, ensuring bottom pipe also has min height (50px)
-        const maxTopHeight = canvas.height - pipeGap - 50; // Max height is canvas height minus gap minus min bottom height
+        const maxTopHeight = canvas.height - pipeGap - minTopHeight;
+        let topPipeHeight = Math.random() * maxTopHeight;
+        topPipeHeight = Math.max(minTopHeight, topPipeHeight); // Ensure min height
 
-        // Ensure maxTopHeight isn't less than minTopHeight (can happen if gap is huge)
-        if (maxTopHeight < minTopHeight) {
-            // If the gap is too large, force both pipes to be minimum height?
-            // Or split remaining space? Let's split remaining space.
-            const remainingHeight = canvas.height - pipeGap; // Should be positive if pipeGap < canvas.height
-            const pipeHeight = Math.max(10, remainingHeight / 2); // Avoid 0 height, min 10px?
-             topPipeHeight = pipeHeight;
-             console.warn("Pipe gap extremely large, adjusting pipe heights.");
-        } else {
-             // Generate random top height within valid range
-            let topPipeHeight = Math.random() * (maxTopHeight - minTopHeight) + minTopHeight;
-            topPipeHeight = Math.max(minTopHeight, topPipeHeight); // Redundant check, but safe
-             topPipeHeight = Math.min(maxTopHeight, topPipeHeight); // Ensure it doesn't exceed max
-             pipes.push({
-                 x: canvas.width, // Start offscreen right
-                 topHeight: topPipeHeight, // Height of the top pipe body
-                 scored: false
-             });
-        }
-
-
+        pipes.push({
+            x: canvas.width, // Start offscreen right
+            topHeight: topPipeHeight, // Height of the top pipe body
+            scored: false
+        });
     }
 
     const pipeWidth = dimensions.width * PIPE_WIDTH_RATIO;
@@ -271,17 +256,9 @@ function drawPipes() {
         const pipe = pipes[i];
         pipe.x -= pipeSpeed; // Move pipe left using the (further reduced) speed
 
-        // Calculate bottom pipe position based on top pipe and the large gap
+        // Calculate bottom pipe position based on top pipe and gap
         const bottomPipeY = pipe.topHeight + pipeGap;
-        const bottomPipeHeight = canvas.height - bottomPipeY; // Height of the bottom pipe
-
-        // Basic check if bottom pipe height is valid (>=0)
-        if (bottomPipeHeight < 0) {
-             console.error("Calculated negative bottom pipe height. Gap likely too large.", pipe.topHeight, pipeGap, canvas.height);
-             // Skip drawing this pipe or handle error? Let's skip drawing bottom.
-              continue;
-        }
-
+        const bottomPipeHeight = canvas.height - bottomPipeY;
 
         // Choose drawing pattern based on style
         let drawFunc;
@@ -299,7 +276,7 @@ function drawPipes() {
         drawFunc(pipe.x, bottomPipeY, pipeWidth, bottomPipeHeight);
 
 
-        // Collision Detection (Now with a huge gap)
+        // Collision Detection
         if (
             bird.x < pipe.x + pipeWidth &&        // Bird's right edge > pipe's left edge
             bird.x + bird.width > pipe.x &&      // Bird's left edge < pipe's right edge
@@ -408,7 +385,7 @@ function resetGame() {
     gameStarted = false; // Require start again
     frameCount = 0;
     pipeSpeed = BASE_PIPE_SPEED; // Reset speed to the new (VERY reduced) base
-    pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL; // Reset spawn rate to base
+    pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL; // Reset spawn rate to the increased base
 
     // Reset audio state flags
     isStartPlaying = false;
@@ -425,7 +402,7 @@ function resetGame() {
     // ctx.clearRect(0, 0, canvas.width, canvas.height);
     // drawBird();
     // drawScore();
-    console.log("Game Reset with very wide gap and adjusted physics");
+    console.log("Game Reset with adjusted physics and wider pipe spacing");
 }
 
 function startGame() {
@@ -435,8 +412,7 @@ function startGame() {
     bird.gravity = BASE_GRAVITY;
     bird.lift = BASE_LIFT;
     pipeSpeed = BASE_PIPE_SPEED;
-    // Ensure pipeGap is recalculated based on current dimensions
-    updateDimensions();
+    pipeSpawnInterval = BASE_PIPE_SPAWN_INTERVAL; // Make sure interval starts at the base
 
 
     if (!audioInitialized) {
@@ -452,9 +428,10 @@ function startGame() {
     gameOver = false; // Ensure game isn't marked as over
 
     // Initial draw before loop starts? Might cause a flicker, usually loop handles first frame
+    // updateDimensions(); // Ensure dimensions are current
     // bird.y = dimensions.height / 4; // Set initial bird Y based on current dimensions
 
-    console.log("Game Starting with very wide gap and adjusted physics");
+    console.log("Game Starting with adjusted physics and wider pipe spacing");
     update(); // Start the game loop
 }
 
@@ -477,7 +454,7 @@ const resizeObserver = new ResizeObserver(entries => {
      if (entries[0]) {
          // We should always update dimensions on resize.
          console.log("Resize detected, updating dimensions.");
-         updateDimensions(); // This now recalculates the large pipeGap too
+         updateDimensions();
          // Reset bird position and physics based on new dimensions/base values
          // This might be jarring mid-game, but necessary for consistency
          bird.y = dimensions.height / 4; // Re-center bird
