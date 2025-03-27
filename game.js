@@ -41,7 +41,7 @@ let bird = {
     width: dimensions.width * 0.125,
     height: dimensions.height * 0.0625,
     gravity: 0.1,
-    lift: -4.5 * 0.7, // Tetap 70% dari nilai asli
+    lift: -4.5 * 0.7, // Dikurangi menjadi 70% dari nilai asli
     velocity: 0
 };
 
@@ -51,11 +51,10 @@ let score = 0;
 let gameOver = false;
 let audioInitialized = false;
 let gameStarted = false;
-let pipeSpeed = 0.75; // Kecepatan awal pilar
-let pipeSpawnInterval = 375 * 0.75; // Dikurangi menjadi 75% dari 375, yaitu 281.25 (dibulatkan ke 281)
+let pipeSpeed = 0.75;
+let pipeSpawnInterval = 150 * 2.5; // Ditambah menjadi 2,5 kali dari nilai asli
 let pipeGap = dimensions.height / 3;
-let initialPipeSpeed = pipeSpeed; // Simpan kecepatan awal untuk reset
-let initialPipeSpawnInterval = pipeSpawnInterval; // Simpan interval awal untuk reset
+let initialPipeSpawnInterval = pipeSpawnInterval;
 let initialPipeGap = pipeGap;
 const audioStart = new Audio('start.wav');
 const audioJump = new Audio('jump.wav');
@@ -246,10 +245,21 @@ function getPipeColors() {
 }
 
 function adjustDifficulty() {
-    // Tingkatkan kesulitan sebesar 10% setelah skor melewati kelipatan 10
-    if (score > 0 && score % 10 === 1) { // Ketika skor menjadi 11, 21, 31, dst.
-        pipeSpeed *= 1.10; // Tingkatkan kecepatan pilar sebesar 10%
-        playSound(audioSuccess); // Efek suara saat kesulitan meningkat
+    if (score === 5) {
+        pipeSpeed = 1.5 * 1.15;
+        pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85);
+        pipeGap = Math.round(initialPipeGap * 0.85);
+        playSound(audioSuccess);
+    } else if (score === 10) {
+        pipeSpeed = 1.5 * 1.15 * 1.15;
+        pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85 * 0.85);
+        pipeGap = Math.round(initialPipeGap * 0.85 * 0.85);
+        playSound(audioSuccess);
+    } else if (score === 15) {
+        pipeSpeed = 1.5 * 1.15 * 1.15 * 1.15;
+        pipeSpawnInterval = Math.round(initialPipeSpawnInterval * 0.85 * 0.85 * 0.85);
+        pipeGap = Math.round(initialPipeGap * 0.85 * 0.85 * 0.85);
+        playSound(audioSuccess);
     }
 }
 
@@ -337,7 +347,7 @@ function drawPipes() {
             score++;
             pipes[i].scored = true;
             playSound(audioScore);
-            adjustDifficulty(); // Panggil fungsi untuk menyesuaikan kesulitan
+            adjustDifficulty();
         }
         if (pipes[i].x < -pipeWidth) {
             pipes.splice(i, 1);
@@ -401,8 +411,8 @@ function resetGame() {
     gameOver = false;
     isStartPlaying = true;
     jumpQueue = false;
-    pipeSpeed = initialPipeSpeed; // Reset kecepatan ke nilai awal
-    pipeSpawnInterval = initialPipeSpawnInterval; // Reset interval ke nilai awal
+    pipeSpeed = 0.75;
+    pipeSpawnInterval = initialPipeSpawnInterval;
     pipeGap = initialPipeGap;
     gameOverOverlay.style.display = "none";
     frameCount = 0;
