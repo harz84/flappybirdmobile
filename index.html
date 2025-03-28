@@ -4,34 +4,34 @@
     <meta charset="UTF-8">
     <!-- Viewport settings to prevent zooming and ensure proper scaling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <title>Flappy Bird Robot (A.3)</title>
+    <title>Flappy Bird Robot (A.4)</title>
     <style>
         /* Basic reset and full viewport setup */
         html, body {
-            overscroll-behavior-y: contain;
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #87CEEB;
+            height: 100%; /* Ensure html/body fill viewport */
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: #87CEEB; /* Background color on body */
             font-family: Arial, sans-serif;
-            -webkit-user-select: none;
+            -webkit-user-select: none; /* Disable text selection */
             -ms-user-select: none;
             user-select: none;
         }
 
         body {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100svh; /* Use dynamic viewport height */
-            touch-action: manipulation;
+            justify-content: center; /* Center content horizontally */
+            align-items: center;     /* Center content vertically */
+            height: 100svh; /* Use dynamic viewport height for mobile */
+            touch-action: manipulation; /* Prevent default touch actions */
         }
 
         /* Canvas is hidden by default */
         canvas#gameCanvas {
-            display: none;
+            display: none; /* Hide canvas initially */
             border: 2px solid #333;
             max-width: 100%;
             max-height: 100%;
@@ -41,9 +41,9 @@
             z-index: 1; /* Canvas below overlays and jump button */
         }
 
-        /* Overlay uses fixed positioning for better viewport anchoring */
+        /* Overlay uses fixed positioning for robust viewport anchoring */
         .overlay {
-            position: fixed; /* Changed from absolute to fixed */
+            position: fixed; /* Use fixed for full viewport centering */
             top: 0;
             left: 0;
             width: 100%;
@@ -51,12 +51,12 @@
             background-color: rgba(0,0,0,0.75);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; /* Vertical centering */
+            align-items: center;     /* Horizontal centering */
             color: white;
             z-index: 10;
             padding: 20px;
-            box-sizing: border-box;
+            box-sizing: border-box; /* Include padding in size */
             text-align: center;
         }
 
@@ -83,35 +83,18 @@
         #restartButton { background-color: #4CAF50; } #restartButton:hover { background-color: #45a049; }
         #finalScore { font-weight: bold; color: #FFD700; }
 
-        /* --- New Jump Button Styles --- */
+        /* Jump Button Styles (No changes from A.3) */
         #jumpButton {
-            display: none; /* Hidden initially */
-            position: fixed; /* Fixed position relative to viewport */
-            bottom: 20px;    /* Distance from bottom */
-            left: 50%;       /* Center horizontally */
-            transform: translateX(-50%); /* Correct centering */
-            padding: 15px 30px; /* Generous padding for tapping */
-            font-size: clamp(18px, 4vw, 22px); /* Responsive font size */
-            font-weight: bold;
-            color: white;
-            background: linear-gradient(145deg, #56ab2f, #a8e063); /* Green gradient */
-            border: none;
-            border-radius: 50px; /* Very rounded corners */
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            z-index: 5; /* Above canvas, below overlays */
-            transition: background 0.3s ease, transform 0.1s ease;
-            -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on some mobile browsers */
+            display: none; position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%); padding: 15px 30px;
+            font-size: clamp(18px, 4vw, 22px); font-weight: bold; color: white;
+            background: linear-gradient(145deg, #56ab2f, #a8e063); border: none;
+            border-radius: 50px; cursor: pointer; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 5; transition: background 0.3s ease, transform 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
         }
-
-        #jumpButton:hover {
-             background: linear-gradient(145deg, #4a9327, #94c74f); /* Darker gradient on hover */
-        }
-
-        #jumpButton:active {
-            transform: translateX(-50%) scale(0.95); /* Press down effect */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
+        #jumpButton:hover { background: linear-gradient(145deg, #4a9327, #94c74f); }
+        #jumpButton:active { transform: translateX(-50%) scale(0.95); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
 
     </style>
 </head>
@@ -120,7 +103,7 @@
     <div class="overlay" id="instructions">
         <div class="overlay-content">
             <h2>Cara Bermain</h2>
-            <p>Ketuk layar, tekan Spasi/Shift, atau gunakan tombol 'Jump' untuk mengepakkan sayap.</p> <!-- Updated text -->
+            <p>Ketuk layar, tekan Spasi/Shift, atau gunakan tombol 'Jump' untuk mengepakkan sayap.</p>
             <p>Terbang melewati celah antar pilar.</p>
             <p>Semakin jauh, semakin cepat!</p>
             <p>Raih skor tertinggi!</p>
