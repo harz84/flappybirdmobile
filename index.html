@@ -2,55 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Reinforced viewport settings to prevent any scaling/zooming -->
+    <!-- Viewport settings to prevent zooming and ensure proper scaling -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
-    <title>Flappy Bird Robot</title>
+    <title>Flappy Bird Robot (A.3)</title>
     <style>
         /* Basic reset and full viewport setup */
         html, body {
-            overscroll-behavior-y: contain; /* Prevent pull-to-refresh */
+            overscroll-behavior-y: contain;
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%; /* Ensure html/body fill viewport */
-            overflow: hidden; /* Prevent scrollbars */
-            background-color: #87CEEB; /* Background color on body */
-        }
-
-        body {
-            display: flex;
-            justify-content: center; /* Center content horizontally */
-            align-items: center;     /* Center content vertically */
-            height: 100svh; /* Use dynamic viewport height for mobile */
+            height: 100%;
+            overflow: hidden;
+            background-color: #87CEEB;
             font-family: Arial, sans-serif;
-            touch-action: manipulation; /* Prevent default touch actions */
-            -webkit-user-select: none; /* Disable text selection */
+            -webkit-user-select: none;
             -ms-user-select: none;
             user-select: none;
         }
 
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100svh; /* Use dynamic viewport height */
+            touch-action: manipulation;
+        }
+
         /* Canvas is hidden by default */
         canvas#gameCanvas {
-            display: none; /* Hide canvas initially */
+            display: none;
             border: 2px solid #333;
-            /* JS sets width/height, CSS limits */
             max-width: 100%;
             max-height: 100%;
-            /* background-color: #87CEEB; /* Match body */
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 1; /* Canvas below overlays and jump button */
         }
 
-        /* Overlay is always present but visibility controlled by display property */
+        /* Overlay uses fixed positioning for better viewport anchoring */
         .overlay {
-            position: absolute;
+            position: fixed; /* Changed from absolute to fixed */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.75);
-            display: flex; /* Uses flex for centering by default */
+            display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -62,70 +61,56 @@
         }
 
         /* Control which overlay is shown */
-        #gameOverOverlay {
-             display: none; /* Hidden initially */
-             z-index: 10;
-        }
-         #instructions {
-             /* display: flex; /* Shown initially by default (now handled by JS potentially if needed, but default is fine) */
-             z-index: 11;
-        }
+        #gameOverOverlay { display: none; z-index: 10; }
+        #instructions { /* display: flex; /* Default is flex */ z-index: 11; }
 
         .overlay-content {
             background-color: rgba(50, 50, 50, 0.85);
             padding: 25px 30px;
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            max-width: 90%; /* Limit width on larger screens */
-            width: auto;    /* Let content define width up to max */
+            max-width: 90%;
+            width: auto;
             box-sizing: border-box;
         }
 
-        .overlay h2 {
-            font-size: clamp(24px, 5vw, 32px);
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #FFD700;
-        }
+        /* Styles for overlay text and buttons remain the same */
+        .overlay h2 { font-size: clamp(24px, 5vw, 32px); margin-top: 0; margin-bottom: 15px; color: #FFD700; }
+        .overlay p { font-size: clamp(16px, 3.5vw, 20px); line-height: 1.6; margin-bottom: 10px; }
+        .overlay button { margin-top: 25px; padding: 12px 25px; font-size: clamp(16px, 4vw, 18px); color: white; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease, transform 0.1s ease; font-weight: bold; }
+        .overlay button:active { transform: scale(0.95); }
+        #startButton { background-color: #00B8D4; } #startButton:hover { background-color: #00869e; }
+        #restartButton { background-color: #4CAF50; } #restartButton:hover { background-color: #45a049; }
+        #finalScore { font-weight: bold; color: #FFD700; }
 
-         .overlay p {
-            font-size: clamp(16px, 3.5vw, 20px);
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-
-        .overlay button {
-            margin-top: 25px;
-            padding: 12px 25px;
-            font-size: clamp(16px, 4vw, 18px);
+        /* --- New Jump Button Styles --- */
+        #jumpButton {
+            display: none; /* Hidden initially */
+            position: fixed; /* Fixed position relative to viewport */
+            bottom: 20px;    /* Distance from bottom */
+            left: 50%;       /* Center horizontally */
+            transform: translateX(-50%); /* Correct centering */
+            padding: 15px 30px; /* Generous padding for tapping */
+            font-size: clamp(18px, 4vw, 22px); /* Responsive font size */
+            font-weight: bold;
             color: white;
+            background: linear-gradient(145deg, #56ab2f, #a8e063); /* Green gradient */
             border: none;
-            border-radius: 8px;
+            border-radius: 50px; /* Very rounded corners */
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-            font-weight: bold;
-        }
-         .overlay button:active {
-             transform: scale(0.95);
-         }
-
-        #startButton {
-            background-color: #00B8D4;
-        }
-        #startButton:hover {
-            background-color: #00869e;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 5; /* Above canvas, below overlays */
+            transition: background 0.3s ease, transform 0.1s ease;
+            -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on some mobile browsers */
         }
 
-        #restartButton {
-            background-color: #4CAF50;
-        }
-        #restartButton:hover {
-            background-color: #45a049;
+        #jumpButton:hover {
+             background: linear-gradient(145deg, #4a9327, #94c74f); /* Darker gradient on hover */
         }
 
-        #finalScore {
-            font-weight: bold;
-            color: #FFD700;
+        #jumpButton:active {
+            transform: translateX(-50%) scale(0.95); /* Press down effect */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
     </style>
@@ -135,7 +120,7 @@
     <div class="overlay" id="instructions">
         <div class="overlay-content">
             <h2>Cara Bermain</h2>
-            <p>Ketuk layar atau tekan Spasi/Shift untuk membuat burung mengepakkan sayapnya.</p>
+            <p>Ketuk layar, tekan Spasi/Shift, atau gunakan tombol 'Jump' untuk mengepakkan sayap.</p> <!-- Updated text -->
             <p>Terbang melewati celah antar pilar.</p>
             <p>Semakin jauh, semakin cepat!</p>
             <p>Raih skor tertinggi!</p>
@@ -154,6 +139,9 @@
             <button id="restartButton">Mulai Lagi (R)</button>
         </div>
     </div>
+
+    <!-- On-Screen Jump Button (hidden by default) -->
+    <button id="jumpButton">Jump</button>
 
     <!-- Game Logic -->
     <script src="game.js"></script>
