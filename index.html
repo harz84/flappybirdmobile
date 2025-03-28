@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Ensure user-scalable=no is set correctly to prevent pinch-zoom -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Flappy Bird Robot</title>
     <style>
@@ -11,8 +12,8 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            /* Use a dynamic height for mobile browser bars */
-            height: 100svh;
+            /* Use dynamic height for mobile browser bars */
+            height: 100svh; /* Use svh for best mobile viewport height */
             background-color: #87CEEB;
             overflow: hidden;
             touch-action: manipulation; /* Prevent zooming/panning on touch */
@@ -25,10 +26,10 @@
             max-width: 100%;
             max-height: 100%;
             /* Let JS control width/height based on aspect ratio */
-            /* background-color: #ADD8E6; */ /* Let the body background show through maybe? Or keep it for contrast */
             background-color: #87CEEB; /* Match body for seamless feel */
             image-rendering: -webkit-optimize-contrast; /* Sharper pixels on scaling */
             image-rendering: crisp-edges;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); /* Add subtle shadow to canvas */
         }
 
         .overlay {
@@ -36,18 +37,20 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 100%; /* Ensure overlay covers entire viewport */
             background-color: rgba(0,0,0,0.75); /* Slightly darker overlay */
-            display: flex; /* Changed default to flex, hidden by JS */
+            display: flex; /* Use flex to center content */
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            justify-content: center; /* Vertically center */
+            align-items: center;     /* Horizontally center */
             color: white;
             font-family: Arial, sans-serif; /* Consistent font */
             z-index: 10;
             padding: 20px;
             box-sizing: border-box; /* Include padding in dimensions */
-            text-align: center;
+            text-align: center; /* Center inline content like text */
+            /* Ensure smooth transitions if needed */
+            /* transition: opacity 0.3s ease; */
         }
 
         /* Specific overlay styles */
@@ -67,6 +70,9 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             max-width: 90%; /* Ensure content fits smaller screens */
+            width: auto; /* Allow content to determine width up to max-width */
+            /* Ensure box-sizing is border-box if padding affects width calculation */
+            box-sizing: border-box;
         }
 
         .overlay h2 {
